@@ -28,17 +28,6 @@ VALID_PASSWORD db '123456'
 
 locals @@ ; (lb - global label, @@lb - local label)
 
-.set_frame_size macro WIDTH, LENGTH
-	mov ah, WIDTH
-	add ah, 2d
-	mov si, offset FRAME_WIDTH
-	mov ds:[si], ah
-	mov si, offset FRAME_LENGTH
-	mov ah, LENGTH
-	add ah, 2d
-	mov ds:[si], ah
-	endm
-
 ;------------------------------------------------
 ; The function clears the screen
 ;
@@ -66,6 +55,28 @@ ClearScreen	proc
 	ret
 
 ClearScreen	endp
+
+;------------------------------------------------
+; The function sets the parameters of the frame
+;
+; Entry: - AX - FRAME_WIDTH
+;		 - BX - FRAME_LENGTH
+; Exit: none
+; Destr: AX, BX, SI
+;------------------------------------------------
+
+SetFrameSize	proc
+
+	add ax, 2d
+	mov si, offset FRAME_LENGTH
+	mov ds:[si], al
+	mov si, offset FRAME_WIDTH
+	add bx, 2d
+	mov ds:[si], bl
+
+	ret
+
+SetFrameSize	endp
 
 ;------------------------------------------------
 ; Draw a line in a frame
@@ -107,44 +118,6 @@ DrawLine	proc	; cld (Clear Dest Flag) (++), std (Set   Dest Flag) (--)
 	ret
 
 DrawLine	endp
-
-;------------------------------------------------
-; Print the message to the screen
-;
-; Entry: SI - addr of the msg
-; Note: - ES - videoseg addr (0b800h)
-;		- DI - addr of the space on the screen
-; Exit:		none
-; Destr: AX, SI, DI
-;------------------------------------------------
-
-PrintMsg	proc
-
-	mov ax, VIDEOSEG
-	mov es, ax
-
-	mov di, START_POINT
-	mov ah, 1
-	mov al, CONSOLE_LENGTH * 2d
-	mul ah
-	add di, ax
-	add di, 2d
-
-@@print_sym:
-	mov ax, '$'
-	cmp ds:[si], al
-	je @@stop_print
-
-	mov ax, ds:[si]
-	mov es:[di], al
-	add di, 2d
-	inc si
-	jmp @@print_sym
-
-@@stop_print:
-	ret
-
-PrintMsg	endp
 
 ;------------------------------------------------
 ; Draw frame
@@ -221,39 +194,42 @@ DrawFrame	proc
 DrawFrame endp
 
 ;------------------------------------------------
-; Entered password
+; Print the message to the screen
 ;
-; Entry:	DX - addr the buffer for a password
+; Entry: SI - addr of the msg
+; Note: - ES - videoseg addr (0b800h)
+;		- DI - addr of the space on the screen
 ; Exit:		none
-; Destr:	AX, DX, SI
+; Destr: AX, SI, DI
 ;------------------------------------------------
 
-EnterPassword	proc
+PrintMsg	proc
 
-	mov ah, 0ah
-	int 21h
+	mov ax, VIDEOSEG
+	mov es, ax
 
-	mov si, dx
-	inc si
-	mov al, 6d
+	mov di, START_POINT
+	mov ah, 1
+	mov al, CONSOLE_LENGTH * 2d
+	mul ah
+	add di, ax
+	add di, 2d
+
+@@print_sym:
+	mov ax, '$'
 	cmp ds:[si], al
-	je @@return
+	je @@stop_print
 
-	call ClearScreen
-	.set_frame_size 1d 24d
-	call DrawFrame
-	mov si, offset ERRRO_MSG
-	call PrintMsg
-	jmp return
+	mov ax, ds:[si]
+	mov es:[di], al
+	add di, 2d
+	inc si
+	jmp @@print_sym
 
-@@return:
-	add si, 7d
-	mov al, '$'
-	mov ds:[si], al
-
+@@stop_print:
 	ret
 
-EnterPassword	endp
+PrintMsg	endp
 
 ;------------------------------------------------
 ; String length counting function (the string must
@@ -262,7 +238,7 @@ EnterPassword	endp
 ; Entry:	DI - addr of the beginning of the string
 ; Note:		$ - 24h (ASCII code)
 ; Exit:		CX - string length
-; Destr:	AX, CX, DI, ES
+; Destr:	AX, CX, DI
 ;------------------------------------------------
 
 strlen	proc
@@ -282,6 +258,65 @@ strlen	proc
     ret
 
 strlen 	endp
+
+;------------------------------------------------
+; Displays a frame with text on the screen
+;
+; Entry:	DI - addr the msg
+; Exit:		none
+; Destr:	AX, CX, DI, SI
+;------------------------------------------------
+
+DrawFrameAndMsg	proc
+
+	push di
+
+	call ClearScreen
+
+	call strlen
+	mov ax, cx
+	mov bx, 2d
+	call SetFrameSize
+	call DrawFrame
+
+	pop si
+	call PrintMsg
+
+	ret
+
+DrawFrameAndMsg	endp
+
+;------------------------------------------------
+; Entered password
+;
+; Entry:	DX - addr the buffer for a password
+; Exit:		none
+; Destr:	AX, BX, DX, SI, DI
+;------------------------------------------------
+
+EnterPassword	proc
+
+	mov ah, 0ah
+	int 21h
+
+	mov si, dx
+	inc si
+	mov al, 6d
+	cmp ds:[si], al
+	je @@return
+
+	mov di, offset ERRRO_MSG
+	call DrawFrameAndMsg
+	jmp return
+
+@@return:
+	add si, 7d
+	mov al, '$'
+	mov ds:[si], al
+
+	ret
+
+EnterPassword	endp
 
 ;------------------------------------------------
 ; The function compares the first num characters
@@ -375,11 +410,8 @@ org 100h
 
 Start:
 	
-	call ClearScreen
-	.set_frame_size 2d 34d
-	call DrawFrame
-	mov si, offset WELCOME_MSG
-	call PrintMsg
+	mov di, offset WELCOME_MSG
+	call DrawFrameAndMsg
 
 	mov dx, offset ENTERED_PASSWORD
 	call EnterPassword
