@@ -299,14 +299,14 @@ EnterPassword	proc
 
     xor bx, bx
     mov es, bx
-    mov bx, 09h * 4
+    mov bx, 21h * 4
         
     mov ax, es:[bx]
-    mov word ptr old09, ax
+    mov word ptr old21, ax
     mov ax, es:[bx+2]
-    mov word ptr old09+2, ax
+    mov word ptr old21+2, ax
 
-    mov word ptr es:[bx], offset New09
+    mov word ptr es:[bx], offset New21
     push cs
     pop ax
     mov word ptr es:[bx+2], ax
@@ -318,10 +318,10 @@ EnterPassword	proc
 
 	xor bx, bx
     mov es, bx
-    mov bx, 09h * 4d
-	mov ax, word ptr old09
+    mov bx, 21h * 4d
+	mov ax, word ptr old21
 	mov word ptr es:[bx], ax
-	mov ax, word ptr old09 + 2d
+	mov ax, word ptr old21 + 2d
 	mov word ptr es:[bx + 2d], ax
 
 	mov si, dx
@@ -453,12 +453,22 @@ CheckPassword	proc
 
 CheckPassword	endp
 
-New09   proc
+New21   proc
+
+	push ax cx si
+
+	cmp ah, 0ah
+	jne @@skip_new21
+
+	call ClearScreen
+
+@@skip_new21:
+	pop si cx ax
 
 	db 0EAh
-old09   dd 0
+old21   dd 0
 
-New09   endp
+New21   endp
 
 .code
 org 100h
