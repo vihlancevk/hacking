@@ -20,12 +20,12 @@ Elems db 2bh, 2dh, 2bh, 0b3h, 20h, 0b3h, 2bh, 2dh, 2bh
 
 LINE_COLOR = 70h
 
-ERRRO_MSG db 'Invalid password length!$'
-WELCOME_MSG db 'Enter the password (6 characters):$'
-CORRECT_PASSWORD db 'Correct password!$'
+ERRRO_MSG          db 'Invalid password length!$'
+WELCOME_MSG        db 'Enter the password (6 characters):$'
+CORRECT_PASSWORD   db 'Correct password!$'
 INCORRECT_PASSWORD db 'Incorrect password!$'
-ENTERED_PASSWORD db 0ffh, 10 dup(00h)
-VALID_PASSWORD db '123456'
+ENTERED_PASSWORD   db 0ffh, 10 dup(00h)
+VALID_PASSWORD     db '123456'
 
 ;------------------------------------------------
 ; The function clears the screen
@@ -455,30 +455,8 @@ CheckPassword	endp
 
 New09   proc
 
-    push ax bx cx si es
-
-	in al, 60h
-
-    mov bx, VIDEOSEG
-	mov es, bx
-
-	xor bx, bx
-	xor cx, cx
-	mov bl, cs:[FRAME_LENGTH]
-	mov cl, cs:[FRAME_LENGTH]
-	add bx, cx
-	add bx, 1d
-	add bx, bx
-
-	mov si, 10h
-	mov ah, 4eh
-	mov al, '*'
-	mov es:[si], ax
-        
-    pop es si cx bx ax
-
-    db 0EAh
-	old09 dd 0
+	db 0EAh
+old09   dd 0
 
 New09   endp
 
