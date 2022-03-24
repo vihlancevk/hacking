@@ -1,5 +1,4 @@
 .model tiny
-.186
 .data
 
 VIDEOSEG = 0b800h
@@ -23,10 +22,10 @@ LINE_COLOR = 70h
 
 ERRRO_MSG db 'Invalid password length!$'
 WELCOME_MSG db 'Enter the password (6 characters):$'
-ENTERED_PASSWORD db 0ffh, 8 dup(00h)
+CORRECT_PASSWORD db 'Correct password!$'
+INCORRECT_PASSWORD db 'Incorrect password!$'
+ENTERED_PASSWORD db 0ffh, 10 dup(00h)
 VALID_PASSWORD db '123456'
-
-locals @@ ; (lb - global label, @@lb - local label)
 
 ;------------------------------------------------
 ; The function clears the screen
@@ -69,10 +68,10 @@ SetFrameSize	proc
 
 	add ax, 2d
 	mov si, offset FRAME_LENGTH
-	mov ds:[si], al
+	mov cs:[si], al
 	mov si, offset FRAME_WIDTH
 	add bx, 2d
-	mov ds:[si], bl
+	mov cs:[si], bl
 
 	ret
 
@@ -81,24 +80,24 @@ SetFrameSize	endp
 ;------------------------------------------------
 ; Draw a line in a frame
 ;
-; Entry:	AH - color (attr) of line
-;			CX - lenght of string
-;			SI - addr of 3-byte array containing line elements
-;			DI - adress of start of line
-;			ES - videoseg addr (0b800h)
-; Exit:		none
-; Destr:	AX, CX, DI, SI
+; Entry: AH - color (attr) of line
+;		 CX - lenght of string
+;		 SI - addr of 3-byte array containing line elements
+;		 DI - adress of start of line
+;		 ES - videoseg addr (0b800h)
+; Exit: none
+; Destr: AX, CX, DI, SI
 ;------------------------------------------------
 
 DrawLine	proc	; cld (Clear Dest Flag) (++), std (Set   Dest Flag) (--)
 
-	mov al, ds:[si]		; lodcb (Load String of )
+	mov al, cs:[si]		; lodcb (Load String of )
 	inc si
 
 	mov es:[di], ax		; stosw (Store String of Words)
 	add di, 2d			
 
-	mov al, ds:[si]		; lodcb
+	mov al, cs:[si]		; lodcb
 	inc si
 
 	sub cx, 2d
@@ -109,7 +108,7 @@ DrawLine	proc	; cld (Clear Dest Flag) (++), std (Set   Dest Flag) (--)
 	add di, 2d
 	loop @@next_sym
 
-	mov al, ds:[si]		; lodsb
+	mov al, cs:[si]		; lodsb
 
 	mov es:[di], ax		; stosw
 	add di, 2d
@@ -122,11 +121,11 @@ DrawLine	endp
 ;------------------------------------------------
 ; Draw frame
 ;
-; Entry:	- FRAME_WIDTH
-;			- FRAME_LENGTH
-; Note:		ES - videoseg addr (0b800h)
-; Exit:		none
-; Destr:	AX, BX, CX, DX, DI, SI, ES
+; Entry: - FRAME_WIDTH
+;		 - FRAME_LENGTH
+; Note:	 ES - videoseg addr (0b800h)
+; Exit: none
+; Destr: AX, BX, CX, DX, DI, SI, ES
 ;------------------------------------------------
 
 DrawFrame	proc
@@ -149,10 +148,10 @@ DrawFrame	proc
 	;------------------------------------------------
 	mov dx, 1d	
 
-	mov cl, ds:[FRAME_WIDTH]
+	mov cl, cs:[FRAME_WIDTH]
 	sub cx, 2d
 
-@@lp:
+@@lp1:
 	mov di, START_POINT		
 	mov ah, dl
 	mov al, CONSOLE_LENGTH * 2d
@@ -168,13 +167,13 @@ DrawFrame	proc
 
 	inc dx
 	mov cx, bx
-	loop @@lp
+	loop @@lp1
 	;================================================	
 		
 	;================================================
 	; Draw last line of frame
 	;------------------------------------------------
-	mov cl, ds:[FRAME_LENGTH]
+	mov cl, cs:[FRAME_LENGTH]
        
     mov si, offset Elems
 	add si, 6d
@@ -199,7 +198,7 @@ DrawFrame endp
 ; Entry: SI - addr of the msg
 ; Note: - ES - videoseg addr (0b800h)
 ;		- DI - addr of the space on the screen
-; Exit:		none
+; Exit: none
 ; Destr: AX, SI, DI
 ;------------------------------------------------
 
@@ -217,10 +216,10 @@ PrintMsg	proc
 
 @@print_sym:
 	mov ax, '$'
-	cmp ds:[si], al
+	cmp cs:[si], al
 	je @@stop_print
 
-	mov ax, ds:[si]
+	mov ax, cs:[si]
 	mov es:[di], al
 	add di, 2d
 	inc si
@@ -235,10 +234,10 @@ PrintMsg	endp
 ; String length counting function (the string must
 ; end with the character $)
 ;
-; Entry:	DI - addr of the beginning of the string
-; Note:		$ - 24h (ASCII code)
-; Exit:		CX - string length
-; Destr:	AX, CX, DI
+; Entry: DI - addr of the beginning of the string
+; Note: $ - 24h (ASCII code)
+; Exit: CX - string length
+; Destr: AX, CX, DI
 ;------------------------------------------------
 
 strlen	proc
@@ -262,9 +261,10 @@ strlen 	endp
 ;------------------------------------------------
 ; Displays a frame with text on the screen
 ;
-; Entry:	DI - addr the msg
-; Exit:		none
-; Destr:	AX, CX, DI, SI
+; Entry: - DI - addr the msg
+;		 - BX - FRAME_WIDTH
+; Exit: none
+; Destr: AX, CX, DI, SI
 ;------------------------------------------------
 
 DrawFrameAndMsg	proc
@@ -275,7 +275,6 @@ DrawFrameAndMsg	proc
 
 	call strlen
 	mov ax, cx
-	mov bx, 2d
 	call SetFrameSize
 	call DrawFrame
 
@@ -289,30 +288,56 @@ DrawFrameAndMsg	endp
 ;------------------------------------------------
 ; Entered password
 ;
-; Entry:	DX - addr the buffer for a password
-; Exit:		none
-; Destr:	AX, BX, DX, SI, DI
+; Entry: DX - addr the buffer for a password
+; Exit: none
+; Destr: AX, BX, DX, SI, DI
 ;------------------------------------------------
 
 EnterPassword	proc
 
+	cli
+
+    xor bx, bx
+    mov es, bx
+    mov bx, 09h * 4
+        
+    mov ax, es:[bx]
+    mov word ptr old09, ax
+    mov ax, es:[bx+2]
+    mov word ptr old09+2, ax
+
+    mov word ptr es:[bx], offset New09
+    push cs
+    pop ax
+    mov word ptr es:[bx+2], ax
+
+	sti
+
 	mov ah, 0ah
 	int 21h
+
+	xor bx, bx
+    mov es, bx
+    mov bx, 09h * 4d
+	mov ax, word ptr old09
+	mov word ptr es:[bx], ax
+	mov ax, word ptr old09 + 2d
+	mov word ptr es:[bx + 2d], ax
 
 	mov si, dx
 	inc si
 	mov al, 6d
-	cmp ds:[si], al
+	cmp cs:[si], al
 	je @@return
-
 	mov di, offset ERRRO_MSG
+	mov bx, 1d
 	call DrawFrameAndMsg
 	jmp return
 
 @@return:
 	add si, 7d
 	mov al, '$'
-	mov ds:[si], al
+	mov cs:[si], al
 
 	ret
 
@@ -323,21 +348,21 @@ EnterPassword	endp
 ; of string1 with the first num characters of string2 (the strings must
 ; end with the character $)
 ;
-; Entry:	- SI - addr of str1
-;           - DI - addr of str2
-;           - AX - number of characters
-; Note:	    $ - 24h (ASCII code)
-; Exit:		- a zero value indicates that the contents of
-;             both memory blocks are equal
-;           - CX - a value 1 indicates
-;             that string1 is greater than string2,
-;             a 2 indicates the opposite
-; Destr:	AX, BX, CX, DX, DI, SI, SP
+; Entry: - SI - addr of str1
+;        - DI - addr of str2
+;        - AX - number of characters
+; Note: $ - 24h (ASCII code)
+; Exit:	- CX - a zero value indicates that the contents of
+;         both memory blocks are equal
+;       - CX - a value 1 indicates
+;         that string1 is greater than string2,
+;         a 2 indicates the opposite
+; Destr: AX, BX, CX, DX, DI, SI, SP
 ;------------------------------------------------
 
 strncmp	proc
 	
-    xor bh, bh
+    xor bx, bx
     xor cx, cx
 	xor dx, dx
 		
@@ -353,12 +378,12 @@ strncmp	proc
         
     add si, cx
     add dl, cl
-    cmp [si], bl
+    cmp cs:[si], bl
     je @@cmp_exp
             
     add di, cx
     add dh, cl
-    cmp [di], bl
+    cmp cs:[di], bl
     jne @@cmp_ncmp
         
     mov cl, 31h
@@ -366,31 +391,31 @@ strncmp	proc
                 
 @@cmp_ncmp:
     inc cl
-    mov bl, [di]
-    cmp [si], bl
+    mov bl, cs:[di]
+    cmp cs:[si], bl
     je @@next_ncmp
         
     dec cl
-    cmp [si], bl
+    cmp cs:[si], bl
     jl @@cmp_less
         
-    mov cl, 31h
+    mov cl, 1d
     jmp @@stop_ncmp
 
 @@cmp_less:
-    mov cl, 32h
+    mov cl, 2d
 	jmp @@stop_ncmp 
 
 @@cmp_eq:
-	mov cl, 30h
+	mov cl, 0d
 	jmp @@stop_ncmp
 						
 @@cmp_exp:
-	mov bl, [di]
-	cmp [si], bl
+	mov bl, cs:[di]
+	cmp cs:[si], bl
 	je @@cmp_eq
         
-    mov cl, 32h
+    mov cl, 2d
     jmp @@stop_ncmp 
 
 @@stop_ncmp:
@@ -398,8 +423,69 @@ strncmp	proc
 
 strncmp	endp
 
+;------------------------------------------------
+; The function checks the entered password
+;
+; Entry: - SI - addr of the valid password
+;		 - DI - addr of the entered password
+; Exit:	
+; Destr: AX, BX, SI, DI
+;------------------------------------------------
+
+CheckPassword	proc
+
+	add di, 2d
+	mov ax, 6d
+	call strncmp
+
+	mov di, offset CORRECT_PASSWORD
+	mov bx, 1d
+
+	cmp cl, 0d
+	je @@correct_pasword
+
+	mov di, offset INCORRECT_PASSWORD
+
+@@correct_pasword:
+	call DrawFrameAndMsg
+
+	ret
+
+CheckPassword	endp
+
+New09   proc
+
+    push ax bx cx si es
+
+	in al, 60h
+
+    mov bx, VIDEOSEG
+	mov es, bx
+
+	xor bx, bx
+	xor cx, cx
+	mov bl, cs:[FRAME_LENGTH]
+	mov cl, cs:[FRAME_LENGTH]
+	add bx, cx
+	add bx, 1d
+	add bx, bx
+
+	mov si, 10h
+	mov ah, 4eh
+	mov al, '*'
+	mov es:[si], ax
+        
+    pop es si cx bx ax
+
+    db 0EAh
+	old09 dd 0
+
+New09   endp
+
 .code
 org 100h
+
+locals @@ ; (lb - global label, @@lb - local label)
 
 .getch	macro
 	nop
@@ -409,12 +495,17 @@ org 100h
 	endm
 
 Start:
-	
+
 	mov di, offset WELCOME_MSG
+	mov bx, 2d
 	call DrawFrameAndMsg
 
 	mov dx, offset ENTERED_PASSWORD
 	call EnterPassword
+
+	mov si, offset VALID_PASSWORD
+	mov di, offset ENTERED_PASSWORD
+	call CheckPassword
 
 return:
 	.getch
