@@ -1,1 +1,16 @@
-The vulnerability lies in the fact that the strcmp function compares only the first n characters entered, that is, if you enter 0 characters (immediately press Enter), the program will give access to the user, ignoring the password.
+0) You can view the password string in the disassembler.
+
+1) The hacking method that uses buffer overflow:  
+  
+   enter psw         valid psw
+ _____________   __________________
+|             | |                  |
+|1 2 3 4 5 6 7| |8 9 10 11 12 13 14|
+|_ _ _ _ _ _ $| |_ _ __ __ __ __ $ |
+|_____________| |__________________|
+
+11111Alt+j11111Alt+j
+
+Alt + j = _$
+
+2) The vulnerability lies in the fact that the strcmp function compares only the first n characters entered, that is, if you enter 0 characters (immediately press Enter), the program will give access to the user, ignoring the password.

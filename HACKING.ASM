@@ -303,8 +303,6 @@ EnterPassword	proc
 	int 21h
 
 	inc cx
-	cmp cl, 6d
-	jae @@return_full_psw
 
 	cmp al, 0dh
 	je @@return_part_psw
@@ -312,13 +310,6 @@ EnterPassword	proc
 	mov cs:[si], al
 	inc si
 	jmp @@input_next
-
-@@return_full_psw:
-	mov cs:[si], al
-	inc si
-	mov al, '$'
-	mov cs:[si], al
-	jmp @@stop_enter
 
 @@return_part_psw:
 	dec cx
@@ -328,7 +319,13 @@ EnterPassword	proc
 @@stop_enter:
 	mov si, dx
 	mov cs:[si], cl
+	cmp cl, 6d
+	jng @@no_change_cx
 
+	mov cx, 6d
+	mov cs:[si], cl
+
+@@no_change_cx:
 	ret
 
 EnterPassword	endp
