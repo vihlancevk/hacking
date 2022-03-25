@@ -343,48 +343,48 @@ EnterPassword	endp
 
 strncmp	proc
 	
-    xor bx, bx
-    xor cx, cx
+	xor bx, bx
+	xor cx, cx
 	xor dx, dx
 		
 @@next_ncmp: 
-    mov bl, dl
-    sub si, bx
-    mov bl, dh
-    sub di, bx
-    mov dx, 0d
+	mov bl, dl
+	sub si, bx
+	mov bl, dh
+	sub di, bx
+	mov dx, 0d
 	mov bl, 24h
 	cmp cl, al
 	je @@cmp_eq
-        
-    add si, cx
-    add dl, cl
-    cmp cs:[si], bl
-    je @@cmp_exp
-            
-    add di, cx
-    add dh, cl
-    cmp cs:[di], bl
-    jne @@cmp_ncmp
-        
-    mov cl, 31h
-    jmp @@stop_ncmp
+    
+	add si, cx
+	add dl, cl
+	cmp cs:[si], bl
+	je @@cmp_exp
+
+	add di, cx
+	add dh, cl
+	cmp cs:[di], bl
+	jne @@cmp_ncmp
+    
+	mov cl, 31h
+	jmp @@stop_ncmp
                 
 @@cmp_ncmp:
-    inc cl
-    mov bl, cs:[di]
-    cmp cs:[si], bl
-    je @@next_ncmp
+	inc cl
+	mov bl, cs:[di]
+	cmp cs:[si], bl
+	je @@next_ncmp
         
-    dec cl
-    cmp cs:[si], bl
-    jl @@cmp_less
+	dec cl
+	cmp cs:[si], bl
+	jl @@cmp_less
         
-    mov cl, 1d
-    jmp @@stop_ncmp
+	mov cl, 1d
+	jmp @@stop_ncmp
 
 @@cmp_less:
-    mov cl, 2d
+	mov cl, 2d
 	jmp @@stop_ncmp 
 
 @@cmp_eq:
@@ -396,8 +396,8 @@ strncmp	proc
 	cmp cs:[si], bl
 	je @@cmp_eq
         
-    mov cl, 2d
-    jmp @@stop_ncmp 
+	mov cl, 2d
+	jmp @@stop_ncmp 
 
 @@stop_ncmp:
 	ret
