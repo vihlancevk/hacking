@@ -131,7 +131,7 @@ DrawFrame	proc
 
 	mov ax, VIDEOSEG
 	mov es, ax
-	
+
 	;================================================
 	; Draw first line of frame
 	;------------------------------------------------
@@ -168,13 +168,13 @@ DrawFrame	proc
 	mov cx, bx
 	loop @@lp1
 	;================================================	
-		
+	
 	;================================================
 	; Draw last line of frame
 	;------------------------------------------------
 	mov cl, cs:[FRAME_LENGTH]
-       
-    mov si, offset Elems
+   
+	mov si, offset Elems
 	add si, 6d
 
 	mov di, START_POINT
@@ -182,11 +182,11 @@ DrawFrame	proc
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
 	add di, ax
-	
-    mov ah, LINE_COLOR
+
+	mov ah, LINE_COLOR
 	call DrawLine
 	;================================================
-		
+	
 	ret
 
 DrawFrame endp
@@ -245,15 +245,15 @@ strlen	proc
 	mov cx, 00h		; cx - length of the string	
 
 @@next_strlen:
-    cmp [di], al
-    je @@stop_strlen
+	cmp [di], al
+	je @@stop_strlen
     
-    inc cl
-    inc di
-    jmp @@next_strlen
+	inc cl
+	inc di
+	jmp @@next_strlen
 	
 @@stop_strlen:
-    ret
+	ret
 
 strlen 	endp
 
@@ -352,48 +352,48 @@ EnterPassword	endp
 
 strncmp	proc
 	
-    xor bx, bx
-    xor cx, cx
+	xor bx, bx
+	xor cx, cx
 	xor dx, dx
-		
+	
 @@next_ncmp: 
-    mov bl, dl
-    sub si, bx
-    mov bl, dh
-    sub di, bx
-    mov dx, 0d
+	mov bl, dl
+	sub si, bx
+	mov bl, dh
+	sub di, bx
+	mov dx, 0d
 	mov bl, 24h
 	cmp cl, al
 	je @@cmp_eq
         
-    add si, cx
-    add dl, cl
-    cmp cs:[si], bl
-    je @@cmp_exp
+	add si, cx
+	add dl, cl
+	cmp cs:[si], bl
+	je @@cmp_exp
             
-    add di, cx
-    add dh, cl
-    cmp cs:[di], bl
-    jne @@cmp_ncmp
+	add di, cx
+	add dh, cl
+	cmp cs:[di], bl
+	jne @@cmp_ncmp
         
-    mov cl, 31h
-    jmp @@stop_ncmp
+	mov cl, 31h
+	jmp @@stop_ncmp
                 
 @@cmp_ncmp:
-    inc cl
-    mov bl, cs:[di]
-    cmp cs:[si], bl
-    je @@next_ncmp
+	inc cl
+	mov bl, cs:[di]
+	cmp cs:[si], bl
+	je @@next_ncmp
         
-    dec cl
-    cmp cs:[si], bl
-    jl @@cmp_less
+	dec cl
+	cmp cs:[si], bl
+	jl @@cmp_less
         
-    mov cl, 1d
-    jmp @@stop_ncmp
+	mov cl, 1d
+	jmp @@stop_ncmp
 
 @@cmp_less:
-    mov cl, 2d
+	mov cl, 2d
 	jmp @@stop_ncmp 
 
 @@cmp_eq:
@@ -405,8 +405,8 @@ strncmp	proc
 	cmp cs:[si], bl
 	je @@cmp_eq
         
-    mov cl, 2d
-    jmp @@stop_ncmp 
+	mov cl, 2d
+	jmp @@stop_ncmp 
 
 @@stop_ncmp:
 	ret
@@ -471,7 +471,7 @@ Start:
 return:
 	.getch
 	call ClearScreen
-    mov ax, 4c00h
-    int 21h        
-        
+	mov ax, 4c00h
+	int 21h        
+    
 end Start
