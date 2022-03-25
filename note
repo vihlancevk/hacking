@@ -13,4 +13,7 @@
 
 Alt + j = _$
 
-2) The vulnerability lies in the fact that the strcmp function compares only the first n characters entered, that is, if you enter 0 characters (immediately press Enter), the program will give access to the user, ignoring the password.
+2) The vulnerability lies in the fact that the strcmp function
+compares only the first n characters entered, that is,
+if you enter 0 characters (immediately press Enter),
+the program will give access to the user, ignoring the password.
