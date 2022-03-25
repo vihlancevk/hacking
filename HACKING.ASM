@@ -245,15 +245,15 @@ strlen	proc
 	mov cx, 00h		; cx - length of the string	
 
 @@next_strlen:
-    cmp [di], al
-    je @@stop_strlen
-    
-    inc cl
-    inc di
-    jmp @@next_strlen
+	cmp [di], al
+	je @@stop_strlen
+
+	inc cl
+	inc di
+	jmp @@next_strlen
 	
 @@stop_strlen:
-    ret
+	ret
 
 strlen 	endp
 
