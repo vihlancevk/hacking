@@ -131,7 +131,7 @@ DrawFrame	proc
 
 	mov ax, VIDEOSEG
 	mov es, ax
-	
+
 	;================================================
 	; Draw first line of frame
 	;------------------------------------------------
@@ -156,7 +156,7 @@ DrawFrame	proc
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
 	add di, ax
-		
+
 	mov ah, LINE_COLOR
 	mov bx, cx
 	mov cl, FRAME_LENGTH
@@ -167,14 +167,14 @@ DrawFrame	proc
 	inc dx
 	mov cx, bx
 	loop @@lp1
-	;================================================	
-		
+	;================================================
+
 	;================================================
 	; Draw last line of frame
 	;------------------------------------------------
 	mov cl, cs:[FRAME_LENGTH]
-       
-    mov si, offset Elems
+
+	mov si, offset Elems
 	add si, 6d
 
 	mov di, START_POINT
@@ -182,11 +182,11 @@ DrawFrame	proc
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
 	add di, ax
-	
-    mov ah, LINE_COLOR
+
+	mov ah, LINE_COLOR
 	call DrawLine
 	;================================================
-		
+
 	ret
 
 DrawFrame endp
@@ -461,7 +461,7 @@ Start:
 return:
 	.getch
 	call ClearScreen
-    mov ax, 4c00h
-    int 21h        
+	mov ax, 4c00h
+	int 21h        
         
 end Start
