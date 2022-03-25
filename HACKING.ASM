@@ -20,12 +20,11 @@ Elems db 2bh, 2dh, 2bh, 0b3h, 20h, 0b3h, 2bh, 2dh, 2bh
 
 LINE_COLOR = 70h
 
-ERRRO_MSG          db 'Invalid password length!$'
 WELCOME_MSG        db 'Enter the password (6 characters):$'
 CORRECT_PASSWORD   db 'Correct password!$'
 INCORRECT_PASSWORD db 'Incorrect password!$'
-ENTERED_PASSWORD   db 0ffh, 10 dup(00h)
-VALID_PASSWORD     db '123456'
+ENTERED_PASSWORD   db 7 dup(00h)
+VALID_PASSWORD     db '123456$'
 
 ;------------------------------------------------
 ; The function clears the screen
@@ -290,52 +289,34 @@ DrawFrameAndMsg	endp
 ;
 ; Entry: DX - addr the buffer for a password
 ; Exit: none
-; Destr: AX, BX, DX, SI, DI
+; Destr: AX, BX, CX, DX, SI
 ;------------------------------------------------
 
 EnterPassword	proc
 
-	cli
+	mov si, dx
+	xor cx, cx
 
-    xor bx, bx
-    mov es, bx
-    mov bx, 21h * 4
-        
-    mov ax, es:[bx]
-    mov word ptr old21, ax
-    mov ax, es:[bx+2]
-    mov word ptr old21+2, ax
-
-    mov word ptr es:[bx], offset New21
-    push cs
-    pop ax
-    mov word ptr es:[bx+2], ax
-
-	sti
-
-	mov ah, 0ah
+@@input_next:
+	mov ah, 01h
 	int 21h
 
-	xor bx, bx
-    mov es, bx
-    mov bx, 21h * 4d
-	mov ax, word ptr old21
-	mov word ptr es:[bx], ax
-	mov ax, word ptr old21 + 2d
-	mov word ptr es:[bx + 2d], ax
+	inc cx
+	cmp cl, 6d
+	jae @@return_full_psw
 
-	mov si, dx
+	cmp al, 0dh
+	je @@return_part_psw
+
+	mov cs:[si], al
 	inc si
-	mov al, 6d
-	cmp cs:[si], al
-	je @@return
-	mov di, offset ERRRO_MSG
-	mov bx, 1d
-	call DrawFrameAndMsg
-	jmp return
+	jmp @@input_next
 
-@@return:
-	add si, 7d
+@@return_full_psw:
+	mov cs:[si], al
+	inc si
+
+@@return_part_psw:
 	mov al, '$'
 	mov cs:[si], al
 
@@ -434,7 +415,6 @@ strncmp	endp
 
 CheckPassword	proc
 
-	add di, 2d
 	mov ax, 6d
 	call strncmp
 
@@ -452,23 +432,6 @@ CheckPassword	proc
 	ret
 
 CheckPassword	endp
-
-New21   proc
-
-	push ax cx si
-
-	cmp ah, 0ah
-	jne @@skip_new21
-
-	call ClearScreen
-
-@@skip_new21:
-	pop si cx ax
-
-	db 0EAh
-old21   dd 0
-
-New21   endp
 
 .code
 org 100h
