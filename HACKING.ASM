@@ -23,7 +23,7 @@ LINE_COLOR = 70h
 WELCOME_MSG        db 'Enter the password (6 characters):$'
 CORRECT_PASSWORD   db 'Correct password!$'
 INCORRECT_PASSWORD db 'Incorrect password!$'
-ENTERED_PASSWORD   db 7 dup(00h)
+ENTERED_PASSWORD   db 8 dup(00h)
 VALID_PASSWORD     db '123456$'
 
 ;------------------------------------------------
@@ -295,6 +295,7 @@ DrawFrameAndMsg	endp
 EnterPassword	proc
 
 	mov si, dx
+	inc si
 	xor cx, cx
 
 @@input_next:
@@ -315,10 +316,18 @@ EnterPassword	proc
 @@return_full_psw:
 	mov cs:[si], al
 	inc si
-
-@@return_part_psw:
 	mov al, '$'
 	mov cs:[si], al
+	jmp @@stop_enter
+
+@@return_part_psw:
+	dec cx
+	mov al, '$'
+	mov cs:[si], al
+
+@@stop_enter:
+	mov si, dx
+	mov cs:[si], cl
 
 	ret
 
@@ -415,7 +424,8 @@ strncmp	endp
 
 CheckPassword	proc
 
-	mov ax, 6d
+	mov ax, cs:[di]
+	inc di
 	call strncmp
 
 	mov di, offset CORRECT_PASSWORD
