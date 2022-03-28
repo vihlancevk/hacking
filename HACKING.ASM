@@ -40,13 +40,12 @@ ClearScreen	proc
 	mov ax, VIDEOSEG
 	mov es, ax
 
+	mov ax, 0d
 	mov cx, CONSOLE_WIDTH * CONSOLE_LENGTH * 2d
 	mov si, 0d
 @@lp:
-	mov al, 0d
-	mov es:[si], al
-
-	inc si
+	mov es:[si], ax
+	add si, 2d
 
 	loop @@lp
 
