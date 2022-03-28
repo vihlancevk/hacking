@@ -6,9 +6,9 @@ VIDEOSEG = 0b800h
 CONSOLE_WIDTH  = 25d
 CONSOLE_LENGTH = 80d
 
-X = 22d
-Y = 10d
-START_POINT = (Y * 80d + X) * 2d
+X db 0d
+Y db 0d
+START_POINT dw 0d
 
 FRAME_WIDTH  db 0d
 FRAME_LENGTH db 0d
@@ -18,7 +18,7 @@ Elems db 2bh, 2dh, 2bh, 0b3h, 20h, 0b3h, 2bh, 2dh, 2bh
 ; |   |
 ; + - +
 
-LINE_COLOR = 70h
+LINE_COLOR = 50h
 
 WELCOME_MSG        db 'Enter the password (6 characters):$'
 CORRECT_PASSWORD   db 'Correct password!$'
@@ -40,7 +40,7 @@ ClearScreen	proc
 	mov ax, VIDEOSEG
 	mov es, ax
 
-	mov cx, 25d * 80d * 2d
+	mov cx, CONSOLE_WIDTH * CONSOLE_LENGTH * 2d
 	mov si, 0d
 @@lp:
 	mov al, 0d
@@ -138,7 +138,7 @@ DrawFrame	proc
 	mov ah, LINE_COLOR
 	mov cl, FRAME_LENGTH
 	mov si, offset Elems
-	mov di, START_POINT
+	mov di, cs:[START_POINT]
 	call DrawLine
 	;================================================
 
@@ -151,7 +151,7 @@ DrawFrame	proc
 	sub cx, 2d
 
 @@lp1:
-	mov di, START_POINT		
+	mov di, cs:[START_POINT]		
 	mov ah, dl
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
@@ -177,7 +177,7 @@ DrawFrame	proc
 	mov si, offset Elems
 	add si, 6d
 
-	mov di, START_POINT
+	mov di, cs:[START_POINT]
 	mov ah, dl
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
@@ -206,7 +206,7 @@ PrintMsg	proc
 	mov ax, VIDEOSEG
 	mov es, ax
 
-	mov di, START_POINT
+	mov di, cs:[START_POINT]
 	mov ah, 1
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
@@ -263,7 +263,7 @@ strlen 	endp
 ; Entry: - DI - addr the msg
 ;		 - BX - FRAME_WIDTH
 ; Exit: none
-; Destr: AX, CX, DI, SI
+; Destr: AX, CX, DX,  DI, SI
 ;------------------------------------------------
 
 DrawFrameAndMsg	proc
@@ -275,6 +275,26 @@ DrawFrameAndMsg	proc
 	call strlen
 	mov ax, cx
 	call SetFrameSize
+
+	mov cx, 40d	; 40d = CONSOLE_LENGTH / 2d
+	shr ax, 1
+	sub cx, ax
+	mov cs:[X], cl
+
+	mov cx, 12d	; 12d = (int)(CONSOLE_WIDTH / 2d)
+	shr bx, 1
+	sub cx, bx
+	mov cs:[Y], cl
+
+	mov ah, cs:[Y]
+	mov al, CONSOLE_LENGTH
+	mul ah
+	xor bx, bx
+	mov bl, cs:[x]
+	add ax, bx
+	shl ax, 1
+	mov cs:[START_POINT], ax
+
 	call DrawFrame
 
 	pop si
@@ -289,18 +309,38 @@ DrawFrameAndMsg	endp
 ;
 ; Entry: DX - addr the buffer for a password
 ; Exit: none
-; Destr: AX, BX, CX, DX, SI
+; Destr: AX, BX, CX, SI, DI
 ;------------------------------------------------
 
 EnterPassword	proc
 
 	mov si, dx
 	inc si
+
+	mov cx, VIDEOSEG
+	mov es, cx
+
+	mov di, cs:[START_POINT]
+	mov cx, 4d
+@@lp2:
+	add di, CONSOLE_LENGTH
+	loop @@lp2
+	xor cx, cx
+	mov cl, cs:[FRAME_LENGTH]
+	add di, cx
+	add di, 4d ; 4d = 2d * 2d
+	sub di, 12d	; 12d = PSW_LEN * 2d
+
 	xor cx, cx
 
 @@input_next:
 	mov ah, 01h
 	int 21h
+
+	mov bh, LINE_COLOR
+	mov bl, '*'
+	mov es:[di], bx
+	add di, 2d
 
 	inc cx
 
@@ -316,11 +356,10 @@ EnterPassword	proc
 	mov al, '$'
 	mov cs:[si], al
 
-@@stop_enter:
 	mov si, dx
 	mov cs:[si], cl
 	cmp cl, 6d
-	jng @@no_change_cx
+	jle @@no_change_cx
 
 	mov cx, 6d
 	mov cs:[si], cl
@@ -415,7 +454,7 @@ strncmp	endp
 ;
 ; Entry: - SI - addr of the valid password
 ;		 - DI - addr of the entered password
-; Exit:	
+; Exit:	none
 ; Destr: AX, BX, SI, DI
 ;------------------------------------------------
 
