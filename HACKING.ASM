@@ -79,11 +79,11 @@ SetFrameSize	endp
 ;------------------------------------------------
 ; Draw a line in a frame
 ;
-; Entry: AH - color (attr) of line
-;        CX - lenght of string
-;        SI - addr of 3-byte array containing line elements
-;        DI - adress of start of line
-;        ES - videoseg addr (0b800h)
+; Entry: - AH - color (attr) of line
+;        - CX - lenght of string
+;        - SI - addr of 3-byte array containing line elements
+;        - DI - adress of start of line
+;        - ES - videoseg addr (0b800h)
 ; Exit: none
 ; Destr: AX, CX, DI, SI
 ;------------------------------------------------
