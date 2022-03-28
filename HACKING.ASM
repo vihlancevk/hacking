@@ -386,10 +386,10 @@ EnterPassword	endp
 ; Note: $ - 24h (ASCII code)
 ; Exit:
 ; - CX - a zero value indicates that the contents of
-;		 both memory blocks are equal
+;        both memory blocks are equal
 ; - CX - a value 1 indicates
-;		 that string1 is greater than string2,
-;		 a 2 indicates the opposite
+;        that string1 is greater than string2,
+;        a 2 indicates the opposite
 ; Destr: AX, BX, CX, DX, DI, SI, SP
 ;------------------------------------------------
 
