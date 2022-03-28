@@ -58,7 +58,7 @@ ClearScreen	endp
 ; The function sets the parameters of the frame
 ;
 ; Entry: - AX - FRAME_WIDTH
-;		 - BX - FRAME_LENGTH
+;        - BX - FRAME_LENGTH
 ; Exit: none
 ; Destr: AX, BX, SI
 ;------------------------------------------------
@@ -79,11 +79,11 @@ SetFrameSize	endp
 ;------------------------------------------------
 ; Draw a line in a frame
 ;
-; Entry: AH - color (attr) of line
-;		 CX - lenght of string
-;		 SI - addr of 3-byte array containing line elements
-;		 DI - adress of start of line
-;		 ES - videoseg addr (0b800h)
+; Entry: - AH - color (attr) of line
+;        - CX - lenght of string
+;        - SI - addr of 3-byte array containing line elements
+;        - DI - adress of start of line
+;        - ES - videoseg addr (0b800h)
 ; Exit: none
 ; Destr: AX, CX, DI, SI
 ;------------------------------------------------
@@ -121,7 +121,7 @@ DrawLine	endp
 ; Draw frame
 ;
 ; Entry: - FRAME_WIDTH
-;		 - FRAME_LENGTH
+;        - FRAME_LENGTH
 ; Note:	 ES - videoseg addr (0b800h)
 ; Exit: none
 ; Destr: AX, BX, CX, DX, DI, SI, ES
@@ -138,7 +138,7 @@ DrawFrame	proc
 	mov ah, LINE_COLOR
 	mov cl, FRAME_LENGTH
 	mov si, offset Elems
-	mov di, START_POINT
+	mov di, cs:[START_POINT]
 	call DrawLine
 	;================================================
 
@@ -151,7 +151,7 @@ DrawFrame	proc
 	sub cx, 2d
 
 @@lp1:
-	mov di, START_POINT		
+	mov di, cs:[START_POINT]		
 	mov ah, dl
 	mov al, CONSOLE_LENGTH * 2d
 	mul ah
@@ -196,7 +196,7 @@ DrawFrame endp
 ;
 ; Entry: SI - addr of the msg
 ; Note: - ES - videoseg addr (0b800h)
-;		- DI - addr of the space on the screen
+;       - DI - addr of the space on the screen
 ; Exit: none
 ; Destr: AX, SI, DI
 ;------------------------------------------------
@@ -261,7 +261,7 @@ strlen 	endp
 ; Displays a frame with text on the screen
 ;
 ; Entry: - DI - addr the msg
-;		 - BX - FRAME_WIDTH
+;        - BX - FRAME_WIDTH
 ; Exit: none
 ; Destr: AX, CX, DX,  DI, SI
 ;------------------------------------------------
@@ -373,10 +373,10 @@ EnterPassword	endp
 ;        - AX - number of characters
 ; Note: $ - 24h (ASCII code)
 ; Exit:	- CX - a zero value indicates that the contents of
-;         both memory blocks are equal
+;              both memory blocks are equal
 ;       - CX - a value 1 indicates
-;         that string1 is greater than string2,
-;         a 2 indicates the opposite
+;              that string1 is greater than string2,
+;              a 2 indicates the opposite
 ; Destr: AX, BX, CX, DX, DI, SI, SP
 ;------------------------------------------------
 
@@ -447,7 +447,7 @@ strncmp	endp
 ; The function checks the entered password
 ;
 ; Entry: - SI - addr of the valid password
-;		 - DI - addr of the entered password
+;        - DI - addr of the entered password
 ; Exit:	none
 ; Destr: AX, BX, SI, DI
 ;------------------------------------------------
